@@ -16,37 +16,39 @@ buildscript {
     }
 
     dependencies {
-        classpath 'net.minecraftforge.gradle:ForgeGradle:2.3-SNAPSHOT'
-        classpath 'gradle.plugin.net.minecrell:licenser:0.3'
+        classpath group: 'net.minecraftforge.gradle', name: 'ForgeGradle', version: '3.+', changing: true // TODO - when FG has official release, remove it
+        classpath 'gradle.plugin.net.minecrell:licenser:0.4'
         classpath 'com.github.jengelman.gradle.plugins:shadow:1.2.4'
         classpath 'org.spongepowered:spongegradle:0.8.2-SNAPSHOT'
-        classpath 'org.spongepowered:mixingradle:0.4-SNAPSHOT'
+//        classpath 'org.spongepowered:mixingradle:0.4-SNAPSHOT'
         classpath 'de.sebastianboegl.gradle.plugins:shadow-log4j-transformer:1.0.1'
     }
 }
+
+// Set up the SV dependency information first, before attempting to let FG resolve it
+ext.rootGroup = "net.minecraft"
+ext.rootMinecraft = "server"
+ext.rootVersion = "$minecraftVersion"
+ext.isClient = false
 
 // Apply shared implementation Gradle config
 apply from: project(':SpongeCommon').file('gradle/implementation.gradle')
 apply plugin: 'de.sebastianboegl.shadow.transformer.log4j'
 
-version = "$minecraft.version-$apiSuffix-$buildNumber"
+version = "$minecraftVersion-$apiSuffix-$buildNumber"
 
 minecraft {
-    tweakClass = 'org.spongepowered.server.launch.VanillaServerTweaker'
-
-    atSource sourceSets.main
+    // TODO - once we can get tweakers set up and modlauncher maybe?
+//    tweakClass = 'org.spongepowered.server.launch.VanillaServerTweker'
+    accessTransformer(common.file('common_at.cfg'))
+    accessTransformer(file('vanilla_at.cfg'))
 }
-ats += 'vanilla_at.cfg'
 
 configurations {
     // While we could set this to 'runtime', Eclipse doesn't support runtime dependencies
     // properly so this was always going before 'compile' in Eclipse
     shadow
     log4j
-}
-
-configurations.forgeGradleMcDeps {
-    transitive = false
 }
 
 dependencies {
@@ -80,13 +82,13 @@ jar {
 }
 
 // Reobfuscate to SRG mappings
-reobf.jar.mappingType = 'SEARGE'
+//reobf.jar.mappingType = 'SEARGE' // TODO - figure out compilation
 
-task('buildCompactMappings', type: org.spongepowered.gradle.cmap.BuildCompactMappingsTask, dependsOn: ['extractMcpMappings', 'splitServerJar']) {
-    minecraftJar = plugins[forgeGradlePlugin].delayedFile(net.minecraftforge.gradle.common.Constants.JAR_SERVER_PURE)
-    srg = plugins[forgeGradlePlugin].delayedFile(net.minecraftforge.gradle.common.Constants.MCP_DATA_SRG)
-    output = new File(temporaryDir, "mappings.cmap")
-}
+//task('buildCompactMappings', type: org.spongepowered.gradle.cmap.BuildCompactMappingsTask, dependsOn: ['extractMcpMappings', 'splitServerJar']) {
+//    minecraftJar = plugins[forgeGradlePlugin].delayedFile(net.minecraftforge.gradle.common.Constants.JAR_SERVER_PURE)
+//    srg = plugins[forgeGradlePlugin].delayedFile(net.minecraftforge.gradle.common.Constants.MCP_DATA_SRG)
+//    output = new File(temporaryDir, "mappings.cmap")
+//}
 
 shadowJar {
     // Exclude development Log4j configuration
@@ -94,7 +96,7 @@ shadowJar {
 
     configurations += [project.configurations.shadow]
 
-    from tasks.buildCompactMappings
+//    from tasks.buildCompactMappings
     from({zipTree(project.configurations.log4j.resolve().first())}) {
         include 'META-INF/org/apache/logging/log4j/core/config/plugins/Log4j2Plugins.dat'
     }
