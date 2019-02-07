@@ -16,7 +16,7 @@ buildscript {
     }
 
     dependencies {
-        classpath group: 'net.minecraftforge.gradle', name: 'ForgeGradle', version: '3.+', changing: true // TODO - when FG has official release, remove it
+        classpath group: 'net.minecraftforge.gradle', name: 'ForgeGradle', version: '3.0.85', changing: true
         classpath 'gradle.plugin.net.minecrell:licenser:0.4'
         classpath 'com.github.jengelman.gradle.plugins:shadow:1.2.4'
         classpath 'org.spongepowered:spongegradle:0.8.2-SNAPSHOT'
