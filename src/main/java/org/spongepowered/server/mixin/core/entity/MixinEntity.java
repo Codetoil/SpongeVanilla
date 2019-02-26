@@ -29,6 +29,7 @@ import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
+import net.minecraft.world.dimension.DimensionType;
 import org.spongepowered.api.Sponge;
 import org.spongepowered.api.event.SpongeEventFactory;
 import org.spongepowered.asm.mixin.Mixin;
@@ -90,8 +91,8 @@ public abstract class MixinEntity implements IMixinEntity {
     @Inject(method = "readFromNBT(Lnet/minecraft/nbt/NBTTagCompound;)V",
             at = @At(value = "INVOKE", target = "Lnet/minecraft/entity/Entity;readEntityFromNBT(Lnet/minecraft/nbt/NBTTagCompound;)V"))
     private void preReadFromNBTInject(NBTTagCompound tagCompound, CallbackInfo ci) {
-        if (tagCompound.hasKey(NbtDataUtil.FORGE_DATA)) {
-            this.customEntityData = tagCompound.getCompoundTag(NbtDataUtil.FORGE_DATA);
+        if (tagCompound.contains(NbtDataUtil.FORGE_DATA)) {
+            this.customEntityData = tagCompound.getCompound(NbtDataUtil.FORGE_DATA);
         }
     }
 
@@ -99,7 +100,7 @@ public abstract class MixinEntity implements IMixinEntity {
             at = @At(value = "INVOKE", target = "Lnet/minecraft/entity/Entity;writeEntityToNBT(Lnet/minecraft/nbt/NBTTagCompound;)V"))
     private void preWriteToNBTInject(NBTTagCompound tagCompound, CallbackInfoReturnable<NBTTagCompound> ci) {
         if (this.customEntityData != null) {
-            tagCompound.setTag(NbtDataUtil.FORGE_DATA, this.customEntityData);
+            tagCompound.put(NbtDataUtil.FORGE_DATA, this.customEntityData);
         }
     }
 
@@ -107,20 +108,20 @@ public abstract class MixinEntity implements IMixinEntity {
      * @author blood - May 30th, 2016
      * @author gabizou - May 31st, 2016 - Update for 1.9.4
      * @author JBYoshi - July 19, 2018 - Actually copy this to SpongeVanilla
+     * @author Zidane - February 26th, 2019 - Version 1.13 - Initial Update
      *
-     * @reason - rewritten to support MoveEntityEvent.Teleport.Portal
-     *
-     * @param toDimensionId The id of target dimension.
+     * @reason Re-route teleportation logic to common
      */
     @Nullable
     @Overwrite
-    public net.minecraft.entity.Entity changeDimension(int toDimensionId) {
+    public net.minecraft.entity.Entity func_212321_a(DimensionType dimensionType) {
         if (!this.world.isRemote && !this.isDead) {
             // Sponge Start - Handle teleportation solely in TrackingUtil where everything can be debugged.
-            return EntityUtil.transferEntityToDimension(this, toDimensionId, (IMixinITeleporter) SpongeImpl.getServer().getWorld(toDimensionId)
+            return EntityUtil.transferEntityToDimension(this, dimensionType, (IMixinITeleporter) this.getServer().getWorld(dimensionType)
                     .getDefaultTeleporter());
             // Sponge End
         }
+
         return null;
     }
 }

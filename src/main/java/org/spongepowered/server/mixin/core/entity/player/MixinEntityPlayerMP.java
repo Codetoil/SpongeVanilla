@@ -27,6 +27,7 @@ package org.spongepowered.server.mixin.core.entity.player;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.nbt.NBTTagCompound;
+import net.minecraft.world.dimension.DimensionType;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
 import org.spongepowered.asm.mixin.injection.At;
@@ -49,26 +50,26 @@ public abstract class MixinEntityPlayerMP extends MixinEntityPlayer {
         this.spawnForcedSet = ((MixinEntityPlayer) (Object) oldPlayer).spawnForcedSet;
 
         final NBTTagCompound old = ((MixinEntityPlayer) (Object) oldPlayer).getEntityData();
-        if (old.hasKey(PERSISTED_NBT_TAG)) {
-            this.getEntityData().setTag(PERSISTED_NBT_TAG, old.getCompoundTag(PERSISTED_NBT_TAG));
+        if (old.contains(PERSISTED_NBT_TAG)) {
+            this.getEntityData().put(PERSISTED_NBT_TAG, old.getCompound(PERSISTED_NBT_TAG));
         }
     }
 
     /**
      * @author gabizou - April 7th, 2018
      * @author JBYoshi - July 19, 2018 - Copy to SpongeVanilla
-     * @reason reroute teleportation logic to common
+     * @author Zidane - February 26th, 2019 - Version 1.13
+     * @reason Re-route teleportation logic to common
      */
     @Overwrite
     @Nullable
-    public Entity changeDimension(int toDimensionId) {
-        if (!this.world.isRemote && !this.isDead) {
+    public Entity func_212321_a(DimensionType dimensionType) {
+        if (!this.world.isRemote && !this.removed) {
             // Sponge Start - Handle teleportation solely in TrackingUtil where everything can be debugged.
-            return EntityUtil.teleportPlayerToDimension((EntityPlayerMP) (Object) this, toDimensionId,
-                    (IMixinITeleporter) SpongeImpl.getServer().getWorld(toDimensionId).getDefaultTeleporter());
+            return EntityUtil.teleportPlayerToDimension((EntityPlayerMP) (Object) this, dimensionType,
+                    (IMixinITeleporter) SpongeImpl.getServer().getWorld(dimensionType).getDefaultTeleporter());
             // Sponge End
         }
         return null;
     }
-
 }
